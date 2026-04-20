@@ -480,6 +480,7 @@ static void draw_panel(int y, int x, int h, int w, const char *title) {
     put_text(y, x + 2, w - 4, c_bold, " %s ", title);
     for (i = 1; i < h - 1; i++) {
         move_to(y + i, x); printf("%s│%s", c_panel, c_reset);
+        move_to(y + i, x + 1); print_fit("", w - 2);
         move_to(y + i, x + w - 1); printf("%s│%s", c_panel, c_reset);
     }
     move_to(y + h - 1, x); printf("%s╰", c_panel); for (i = 0; i < w - 2; i++) printf("─"); printf("╯%s", c_reset);
@@ -541,12 +542,20 @@ static void draw_devices(Snapshot *s, int y, int x, int h, int w) {
 }
 
 static void draw(Snapshot *s, AppState *app) {
+    static int last_rows = 0;
+    static int last_cols = 0;
     int rows, cols, left_w, right_w, body_h, right_top, external = 0, apps = 0, i;
     int seen[4096], seen_count = 0;
     char stamp[64], note[256];
     struct tm *tmv = localtime(&s->timestamp);
     term_size(&rows, &cols);
-    clear_screen();
+    if (rows != last_rows || cols != last_cols) {
+        clear_screen();
+        last_rows = rows;
+        last_cols = cols;
+    } else {
+        move_to(0, 0);
+    }
     if (rows < 24 || cols < 90) {
         put_text(0, 0, cols, c_red, "nettop needs at least 90x24 terminal space");
         fflush(stdout);
@@ -604,6 +613,7 @@ static void raw_terminal(void) {
         atexit(restore_terminal);
     }
     printf("\033[?25l");
+    clear_screen();
 }
 
 static int key_read(void) {
